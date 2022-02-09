@@ -76,7 +76,26 @@ export enum API {
 
 export interface Block {
     id: string;
-    height: number;
+    parent_id: string;
+    parent_voter_signature: string;
+    height: string;
+    timestamp: string;
+    collection_guarantees: Array<{
+        collection_id: string;
+        signatures: Array<string>;
+        signer_ids: Array<string>;
+    }>;
+    block_seals: Array<{
+        block_id: string;
+        execution_receipt_id: string;
+        execution_receipt_signatures: Array<Buffer>;
+        result_approval_signatures: Array<Buffer>;
+    }>;
+    execution_result: {
+        id: string;
+        block_id: string;
+        events: [];
+    }
 }
 
 export class FlowRestClient {
@@ -103,17 +122,27 @@ export class FlowRestClient {
             }
         }
     }
-    public async getLatestBlock(): Promise<Block | Error> {
-        return JSON.parse((await this.axios.get(`/blocks?height=final`)).data).map((x: any) => { return { id: x.header.id, height: x.header.height } }).pop();
+    public async getLatestBlock(): Promise<Block[] | Error> {
+        return JSON.parse((await this.axios.get(`/blocks?height=final&expand=payload,execution_result`)).data);
     }
     public async getBlock(blockId: string | Buffer): Promise<Block[] | Error> {
-        return JSON.parse((await this.axios.get(`/blocks/${blockId instanceof Buffer ? blockId.toString('hex') : blockId}`)).data).map((x: any) => { return { id: x.header.id, height: x.header.height } });
+        const block = JSON.parse((await this.axios.get(`/blocks/${blockId instanceof Buffer ? blockId.toString('hex') : blockId}?expand=payload,execution_result`)).data);
+        if (block instanceof Error) return block;
+        if (block.code) return Error(JSON.stringify(block, null, 2));
+        return block;
     }
     public async getBlockHeight(heightIds: Array<number>): Promise<Block[] | Error> {
-        return JSON.parse((await this.axios.get(`/blocks?height=${heightIds.join(',')}`)).data).map((x: any) => { return { id: x.header.id, height: x.header.height } });
+        const block = JSON.parse((await this.axios.get(`/blocks?height=${heightIds.join(',')}&expand=payload,execution_result`)).data);
+        if (block instanceof Error) return block;
+        if (block.code) return Error(JSON.stringify(block, null, 2));
+        return block;
     }
+
     public async getBlocksInRange(startHeight: number, endHeight: number): Promise<Block[] | Error> {
-        return JSON.parse((await this.axios.get(`/blocks?start_height=${startHeight}&end_height=${endHeight}`)).data).map((x: any) => { return { id: x.header.id, height: x.header.height } });
+        const block = JSON.parse((await this.axios.get(`/blocks?start_height=${startHeight}&end_height=${endHeight}&expand=payload,execution_result`)).data);
+        if (block instanceof Error) return block;
+        if (block.code) return Error(JSON.stringify(block, null, 2));
+        return block;
     }
     public async getTransaction(transactionId: string | Buffer): Promise<Transaction | Error> {
         const tx = JSON.parse((await this.axios.get(`/transactions/${transactionId instanceof Buffer ? transactionId.toString('hex') : transactionId}`)).data);
@@ -145,14 +174,10 @@ export class FlowRestClient {
     public async submitTransaction(transaction: Transaction): Promise<any> {
         return JSON.parse((await this.axios.post(`/transactions`, JSON.stringify(transaction))).data);
     }
-    /* public async getCollection(collectionId: string | Buffer) {
-        return await this.axios.get(`/collections/${collectionId instanceof Buffer ? collectionId.toString('hex') : collectionId}`);
-    } */
-    /* public async getExecutionResults(blockIds: Array<string | Buffer>) {
-        return await this.axios.get(`/execution_results?block_id=${blockIds.map((x) => {return x instanceof Buffer ? x.toString('hex') : x}).join(',')}`);
-    } */
     public async getAccount(address: string | Buffer): Promise<Account | Error> {
         const acct = JSON.parse((await this.axios.get(`/accounts/${address instanceof Buffer ? address.toString('hex') : address}?expand=contracts,keys`)).data);
+        if (acct instanceof Error) return acct;
+        if (acct.code) return Error(JSON.stringify(acct, null, 2));
         return {
             address: acct.address,
             balance: acct.balance,
@@ -160,11 +185,19 @@ export class FlowRestClient {
             contracts: acct.contracts,
         }
     }
-    public async executeScript(script: Script) {
+    public async executeScript(script: Script): Promise<any> {
         return JSON.parse(Buffer.from((await this.axios.post(`/scripts`, JSON.stringify(script),)).data, 'base64').toString());
     }
-    /* public async getEventsWithinBlockHeight(type: string, startHeight: number, endHeight: number): Promise<any> {
+    public async getEventsWithinBlockHeight(type: string, startHeight: number, endHeight: number): Promise<Event | Error> {
+        const event = JSON.parse((await this.axios.get(`/events?type=${type}&start_height=${startHeight}&end_height=${endHeight}`)).data);
+        if (event instanceof Error) return event;
+        if (event.code) return Error(JSON.stringify(event, null, 2));
+        return event.map((x: any) => { return x.events }).flat();
     }
-    public async getEventsAtBlockHeight(type: string, blockIds: Array<number>): Promise<any> {
-    } */
+    public async getEvents(type: string, blockIds: Array<string>): Promise<Event | Error> {
+        const event = JSON.parse((await this.axios.get(`/events?type=${type}&block_ids=${blockIds.join(',')}`)).data);
+        if (event instanceof Error) return event;
+        if (event.code) return Error(JSON.stringify(event, null, 2));
+        return event.map((x: any) => { return x.events }).flat();
+    }
 }

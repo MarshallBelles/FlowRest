@@ -88,6 +88,26 @@ describe("FlowRestUnitTesting", () => {
 
         Object.assign(axiosStub, {
             get: jest.fn((endpoint: string, body?: any) => {
+                if (endpoint.includes("A.TEST.CONTRACT.EVENT")) {
+                    return {
+                        data: `[
+                            {
+                              "block_id": "d7aa4c32c6ab7e08b4603d77a4c501f00787498ff05d43f132fe9c874f0f3537",
+                              "block_height": "59724141",
+                              "block_timestamp": "2022-02-09T18:45:40.306393724Z",
+                              "events": [
+                                {
+                                  "type": "A.39f0e47b8acdcbc6.FLOAT.FLOATMinted",
+                                  "transaction_id": "c2b04a7e5b6d2a781b9aa0f2a39c4c19b1e9d8ba5b3ae2f0d89312f40408f553",
+                                  "transaction_index": "0",
+                                  "event_index": "1",
+                                  "payload": "eyJ0eXBlIjoiRXZlbnQiLCJ2YWx1ZSI6eyJpZCI6IkEuMzlmMGU0N2I4YWNkY2JjNi5GTE9BVC5GTE9BVE1pbnRlZCIsImZpZWxkcyI6W3sibmFtZSI6ImlkIiwidmFsdWUiOnsidHlwZSI6IlVJbnQ2NCIsInZhbHVlIjoiMzE1NzcwNjEifX0seyJuYW1lIjoiZXZlbnRIb3N0IiwidmFsdWUiOnsidHlwZSI6IkFkZHJlc3MiLCJ2YWx1ZSI6IjB4NmMwZDUzYzY3NjI1NmU4YyJ9fSx7Im5hbWUiOiJldmVudElkIiwidmFsdWUiOnsidHlwZSI6IlVJbnQ2NCIsInZhbHVlIjoiMzA4NzA1OTUifX0seyJuYW1lIjoic2VyaWFsIiwidmFsdWUiOnsidHlwZSI6IlVJbnQ2NCIsInZhbHVlIjoiNzkwIn19LHsibmFtZSI6InJlY2lwaWVudCIsInZhbHVlIjp7InR5cGUiOiJBZGRyZXNzIiwidmFsdWUiOiIweDdmZjg1YTc5YTBhNTcxZjUifX1dfX0K"
+                                }
+                              ]
+                            }
+                          ]`
+                    }
+                }
                 if (endpoint.includes("accounts")) {
                     return {
                         data: `{
@@ -114,26 +134,36 @@ describe("FlowRestUnitTesting", () => {
                     }
                 }
                 if (endpoint.includes("blocks")) {
-                    return {
-                        data: `[
-                        {
-                          "header": {
-                            "id": "7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510",
-                            "parent_id": "f3c1ea0f81c50c4db827920c6028a6da3fc086ad2e68e9de97687f5409dea5cd",
-                            "height": "59554433",
-                            "timestamp": "2022-02-08T00:03:04.132691927Z",
-                            "parent_voter_signature": "pdyAoFpBYJufCD4zFHPEEut4HOSTGOPrC1CEWEdoD4aFR1K3+FwIzVymywqHzGNjjPe8LF3uMcanbep7Tjn+9APMT3PoMB3ySN6XcLJqVSfLRl2YXoc5L5PM/e9179tn"
-                          },
-                          "_expandable": {
-                            "payload": "/v1/blocks/7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510/payload",
-                            "execution_result": "/v1/execution_results/42b600689ba2f9563b8ae0fbc97b79c39f43d018e29fd4ad9c1ee2f2bd8d01e2"
-                          },
-                          "_links": {
-                            "_self": "/v1/blocks/7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510"
-                          }
+                    if (endpoint.includes("934f4c693b18f036ec66e03509f7a81c026d5659e3b74cd6d9bdc5f487beb3ff") || endpoint.includes('59536847') || endpoint.includes('height=final')) {
+                        return {
+                            data: `[
+                            {
+                              "header": {
+                                "id": "7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510",
+                                "parent_id": "f3c1ea0f81c50c4db827920c6028a6da3fc086ad2e68e9de97687f5409dea5cd",
+                                "height": "59554433",
+                                "timestamp": "2022-02-08T00:03:04.132691927Z",
+                                "parent_voter_signature": "pdyAoFpBYJufCD4zFHPEEut4HOSTGOPrC1CEWEdoD4aFR1K3+FwIzVymywqHzGNjjPe8LF3uMcanbep7Tjn+9APMT3PoMB3ySN6XcLJqVSfLRl2YXoc5L5PM/e9179tn"
+                              },
+                              "_expandable": {
+                                "payload": "/v1/blocks/7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510/payload",
+                                "execution_result": "/v1/execution_results/42b600689ba2f9563b8ae0fbc97b79c39f43d018e29fd4ad9c1ee2f2bd8d01e2"
+                              },
+                              "_links": {
+                                "_self": "/v1/blocks/7048b8707853af04ed412d669731e1a23e372a5386948ff406250e571bb68510"
+                              }
+                            }
+                          ]`
                         }
-                      ]`
+                    } else {
+                        return {
+                            data: `{
+                                "code": 400,
+                                "message": "invalid ID format"
+                            }`
+                        }
                     }
+
                 }
                 if (endpoint.includes("transactions")) {
                     return {
@@ -219,15 +249,27 @@ describe("FlowRestUnitTesting", () => {
         expect(block instanceof Error).toBeFalsy;
         expect(axiosStub.get).toBeCalled();
     });
+    it("should not get invalid block", async () => {
+        const block = await client.getBlock("999999993b18f036ec66e03509f7a81c026d5659e3b74cd6d9bdc5f487beb3ff");
+        expect(block instanceof Error).toBeTruthy();
+    });
     it("should getBlockHeight", async () => {
         const block = await client.getBlockHeight([59536847]);
         expect(block instanceof Error).toBeFalsy;
         expect(axiosStub.get).toBeCalled();
     });
+    it("should not get invalid blockHeight", async () => {
+        const block = await client.getBlockHeight([10000]);
+        expect(block instanceof Error).toBeTruthy();
+    });
     it("should getBlocksInRange", async () => {
         const block = await client.getBlocksInRange(59536847, 59536867);
         expect(block instanceof Error).toBeFalsy;
         expect(axiosStub.get).toBeCalled();
+    });
+    it("should not get invalid block range", async () => {
+        const block = await client.getBlocksInRange(0, 100);
+        expect(block instanceof Error).toBeTruthy();
     });
     it("should getTransaction", async () => {
         const tx = await client.getTransaction("35bb3c9593e13e3e9b8a36b40941064aab14f9f76db0e3176b91b15fbc4a618e");
@@ -249,7 +291,7 @@ describe("FlowRestUnitTesting", () => {
             }
         }
         `;
-        let latestBlock = <Block>(await client.getLatestBlock());
+        let latestBlock = (<Block[]>await client.getLatestBlock()).pop()!;
         const transaction: Transaction = {
             script: scriptBuilder(script),
             arguments: argBuilder(["hello", 12345]),
@@ -269,12 +311,6 @@ describe("FlowRestUnitTesting", () => {
         expect(txres instanceof Error).toBeFalsy();
         expect(axiosStub.post).toBeCalledWith("/transactions", JSON.stringify(transaction));
     });
-    /* it("should getCollection", async () => {
-    }); */
-    /* it("should getBlockExecutionResults", async () => {
-    }); */
-    /* it("should getExecutionResults", async () => {
-    }); */
     it("should getAccount", async () => {
         const txres = await client.getAccount("f8d6e0586b0a20c7");
         expect(txres instanceof Error).toBeFalsy();
@@ -290,8 +326,12 @@ describe("FlowRestUnitTesting", () => {
         expect(scres instanceof Error).toBeFalsy();
         expect(scres.value).toBe("asdf56789");
     });
-    /* it("should getEventsWithinBlockHeight", async () => {
+    it("should getEventsWithinBlockHeight", async () => {
+        const events = await client.getEventsWithinBlockHeight("A.TEST.CONTRACT.EVENT", 69536847, 69536847);
+        expect(events instanceof Error).toBeFalsy();
     });
     it("should getEventsAtBlockHeight", async () => {
-    }); */
+        const scres = await client.getEvents("A.TEST.CONTRACT.EVENT", ["934f4c693b18f036ec66e03509f7a81c026d5659e3b74cd6d9bdc5f487beb3ff"]);
+        expect(scres instanceof Error).toBeFalsy();
+    });
 });

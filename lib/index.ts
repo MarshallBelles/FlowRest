@@ -40,6 +40,7 @@ export interface Transaction {
 export interface TransactionResult {
     block_id: string;
     status: string;
+    status_code: number;
     error_message: string;
     computation_used: string;
     events: Array<Event>;
@@ -166,6 +167,7 @@ export class FlowRestClient {
         return {
             block_id: txr.block_id,
             status: txr.status,
+            status_code: txr.status_code,
             error_message: txr.error_message,
             computation_used: txr.computation_used,
             events: txr.events
